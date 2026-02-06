@@ -3,12 +3,33 @@ class Request:
     def __init__(self, request: bytes):
         # TODO: parse the bytes of the request and populate the following instance variables
 
-        self.body = b""
-        self.method = ""
-        self.path = ""
-        self.http_version = ""
+        request = request.split(b"\r\n\r\n")
+        self.body = request.pop(1)                      # pop body from request and save before decoding
+
+        request = request.pop().decode("utf-8")
+        splitRequest = request.split('\r\n')            # split on newline to break into each line
+
+        requestLine = splitRequest.pop(0).split(' ')    # split first line on spaces to get 3 parts of request line
+
+        self.method = requestLine[0]
+        self.path = requestLine[1]
+        self.http_version = requestLine[2]
+
         self.headers = {}
         self.cookies = {}
+                                                        # remaining lines of request are all headers
+        for line in splitRequest:                       # headers are written key: value
+            splitHeader = line.split(': ')              # space is "optional" but must be included here for localhost:8080
+
+            self.headers[splitHeader[0].strip()] = splitHeader[1].strip()
+
+            if splitHeader[0].strip().lower() == "cookie":      # cookies are written key= value and split on ;
+                cookies = splitHeader[1].strip().split(";")
+
+                for cookie in cookies:                  # choosing to ignore runtime out of laziness :P
+                    splitCookie = cookie.split("=")
+                    self.cookies[splitCookie[0].strip()] = splitCookie[1].strip()
+
 
 
 def test1():
